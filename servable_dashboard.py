@@ -1,4 +1,3 @@
-# %%
 import pandas as pd
 import numpy as np
 import panel as pn
@@ -13,7 +12,6 @@ gv.extension('bokeh')
 import holoviews as hv
 import hvplot.pandas
 
-# %%
 # FUNCTIONING DROPDOWN MENU
 
 import pandas as pd
@@ -40,16 +38,12 @@ plot2 = gdf.hvplot(geo=True, tiles=True, size=dropdown, color=dropdown, cmap='vi
 
 pn.Column(pn.WidgetBox(dropdown), plot, plot2)
 
-# %%
 terror = pd.read_csv('globalterrorism.csv', encoding="ISO-8859-1", low_memory=False)
 
-# %%
 filter_terror = terror.loc[terror['iyear'] >= 1994].loc[terror['longitude'].notnull()].loc[terror['latitude'].notnull()]
 
-# %%
 filter_terror['weaptype1_txt'] = filter_terror['weaptype1_txt'].replace('Vehicle (not to include vehicle-borne explosives, i.e., car or truck bombs)', 'Vehicle')
 
-# %%
 country_df = filter_terror \
     .groupby(['country_txt', 'iyear', 'weaptype1_txt'], as_index = False) \
     .agg(
@@ -70,7 +64,6 @@ region_df = filter_terror \
     )
     
 
-# %%
 
 country_gdf = gpd.GeoDataFrame(region_df, 
     geometry = gpd.points_from_xy(region_df.longitude, region_df.latitude),
@@ -93,7 +86,6 @@ country_plot = country_gdf.hvplot(
 
 pn.Column(pn.WidgetBox(statistic_dropdown), country_plot)
 
-# %%
 statistic_dropdown = pn.widgets.Select(name='Statistic', options=['num_incidents', 'total_killed'])
 
 weapons_by_country = country_df.hvplot(
@@ -111,7 +103,6 @@ weapons_by_country = country_df.hvplot(
 pn.Column(pn.WidgetBox(statistic_dropdown), weapons_by_country)
 
 
-# %%
 statistic_dropdown = pn.widgets.Select(name='Statistic', options=['num_incidents', 'total_killed'])
 
 weapons_by_region = region_df.hvplot(
@@ -244,7 +235,6 @@ natlty_plot = natlty_pipeline.hvplot(
 pn.Column(country_dropdown, statistic_dropdown, pn.Row(weapon_plot, group_plot), pn.Row(country_targ_plot, natlty_plot))
 
 
-# %%
 # New region_region_weapon_df (resets the index)
 region_region_weapon_df = (filter_terror
          .groupby(["region_txt", "weaptype1_txt"])
@@ -367,7 +357,6 @@ region_natlty_plot = region_natlty_pipeline.hvplot(
 
 pn.Column(region_dropdown, statistic_dropdown, pn.Row(region_weapon_plot, region_group_plot), pn.Row(region_targ_plot, region_natlty_plot))
 
-# %%
 # Incidents per country per year (map visualization)
 
 incident_data = pd.read_csv('countincidents.csv', encoding="ISO-8859-1", low_memory=False)
@@ -383,7 +372,6 @@ map_plot = pn.panel(tiles * points.opts(
 
 map_plot
 
-# %%
 y_vals = ['Private Citizens & Property',
           'Military',
           'Police',
@@ -412,7 +400,6 @@ pn.Column(
     top10_targ.hvplot.line(x='iyear', y='total_killed', by='targtype1_txt', height=500, width=1000)
 )
 
-# %%
 # Top 10 countries by # incidents/100k people line graph
 
 top10 = pd.read_csv("top10incidents.csv", encoding="ISO-8859-1", low_memory=False)
@@ -420,21 +407,30 @@ top10 = pd.read_csv("top10incidents.csv", encoding="ISO-8859-1", low_memory=Fals
 top10.hvplot.line(x='Year', y=['Iraq', 'West Bank and Gaza Strip', 'Afghanistan', 'Libya', 'Somalia', 'Israel', 'Bahrain', 'Lebanon', 'Syria', 'Yemen'], 
                 value_label='# incidents/100k people', legend='right', title='Top 10 Countries by # incidents/100k people', height=500, width=1000)
 
-# %%
 # Build interactive dashboard
 
-template = pn.template.FastListTemplate(
-    title='insert title here',
-    background_color='#63d8ff',
-    neutral_color='#F08080',
-    header_background='#0072B5',
-    main=[pn.Row(pn.Column(pn.pane.Markdown('insert markdown here'), background='#0072B5')),
-          pn.Row(pn.Column(map_plot)),
-          pn.Row(pn.pane.Str('test1', background='#f0f0f0', height=100, sizing_mode='stretch_width'), width_policy='max', height=200),
-          pn.Row(pn.layout.HSpacer(), '* Item 1\n* Item2', pn.layout.HSpacer(), '1. First\n2. Second', pn.layout.HSpacer()),
-          pn.Row(pn.pane.HTML(background='#f307eb', width=100, height=100))
-         ]
-)
-template.servable();
+def build_dashboard():
+    template = pn.template.FastListTemplate(
+        title='insert title here',
+        background_color='#63d8ff',
+        neutral_color='#F08080',
+        header_background='#0072B5',
+        main=[pn.Row(pn.Column(pn.pane.Markdown('insert markdown here'), background='#0072B5')),
+            pn.Row(pn.Column(map_plot)),
+            pn.Row(pn.pane.Str('test1', background='#f0f0f0', height=100, sizing_mode='stretch_width'), width_policy='max', height=200),
+            pn.Row(pn.layout.HSpacer(), '* Item 1\n* Item2', pn.layout.HSpacer(), '1. First\n2. Second', pn.layout.HSpacer()),
+            pn.Row(pn.pane.HTML(background='#f307eb', width=100, height=100))
+            ]
+    )
+    template.servable()
 
 
+
+if __name__.startswith("bokeh"):
+    # start with panel serve script.py
+    dashboard = build_dashboard()
+    dashboard.servable()
+if __name__ == "__main__":
+    # start with python script.py
+    dashboard = build_dashboard()
+    dashboard.show(port=5007)
