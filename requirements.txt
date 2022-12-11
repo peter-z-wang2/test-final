@@ -3,3 +3,4 @@ hvplot
 scikit-learn
 pandas
 jupyter
+geoviews
